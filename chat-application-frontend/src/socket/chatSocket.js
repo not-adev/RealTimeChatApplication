@@ -4,7 +4,7 @@ const socketUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 let socket = null
 
-export function connectSocket({ username, onMessageReceived }) {
+export function connectSocket({ username, onMessageReceived, onUsersUpdated }) {
   if (socket) {
     socket.disconnect()
   }
@@ -21,6 +21,10 @@ export function connectSocket({ username, onMessageReceived }) {
 
   socket.on('newMessage', (message) => {
     onMessageReceived(message)
+  })
+
+  socket.on('usersUpdated', (users) => {
+    onUsersUpdated?.(users)
   })
 
   return socket

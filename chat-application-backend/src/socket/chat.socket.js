@@ -1,11 +1,15 @@
 export function registerChatSocket(io) {
+  const connectedUsers = new Set()
+
   io.on('connection', (socket) => {
     console.log('Socket connected:', socket.id)
 
     socket.on('join', ({ username }) => {
       if (username) {
         socket.username = username
+        connectedUsers.add(username)
         socket.join('global-chat')
+        io.to('global-chat').emit('usersUpdated', Array.from(connectedUsers))
         console.log(`${username} joined the chat`)
       }
     })

@@ -4,28 +4,6 @@ import { connectSocket, disconnectSocket, emitSendMessage } from '../socket/chat
 
 const storageKey = 'chat-ui-messages'
 const userStorageKey = 'chat-ui-username'
-const contactName = 'Ava'
-
-const starterMessages = [
-  {
-    id: '1',
-    sender: 'Ava',
-    text: 'Hi! I am ready to help with the new chat experience.',
-    time: '2026-07-12T09:15:00.000Z',
-  },
-  {
-    id: '2',
-    sender: 'You',
-    text: 'Perfect. I want a polished UI for the real-time chat app.',
-    time: '2026-07-12T09:16:00.000Z',
-  },
-  {
-    id: '3',
-    sender: 'Ava',
-    text: 'Great choice. The interface is now structured for live messaging.',
-    time: '2026-07-12T09:17:00.000Z',
-  },
-]
 
 function formatTime(value) {
   const date = new Date(value)
@@ -38,14 +16,14 @@ function formatTime(value) {
 function ChatInterface() {
   const [messages, setMessages] = useState(() => {
     if (typeof window === 'undefined') {
-      return starterMessages
+      return []
     }
 
     try {
       const savedMessages = window.localStorage.getItem(storageKey)
-      return savedMessages ? JSON.parse(savedMessages) : starterMessages
+      return savedMessages ? JSON.parse(savedMessages) : []
     } catch {
-      return starterMessages
+      return []
     }
   })
   const [draft, setDraft] = useState('')
@@ -57,6 +35,7 @@ function ChatInterface() {
     return window.localStorage.getItem(userStorageKey) || ''
   })
   const [isLoadingHistory, setIsLoadingHistory] = useState(false)
+  const [connectedUsers, setConnectedUsers] = useState([])
   const socketRef = useRef(null)
   const messageEndRef = useRef(null)
 
@@ -78,10 +57,10 @@ function ChatInterface() {
         if (data.length > 0) {
           setMessages(data)
         } else {
-          setMessages((previous) => (previous.length > 0 ? previous : starterMessages))
+          setMessages([])
         }
       } catch {
-        setMessages((previous) => (previous.length > 0 ? previous : starterMessages))
+        setMessages([])
       } finally {
         setIsLoadingHistory(false)
       }
@@ -114,6 +93,9 @@ function ChatInterface() {
 
           return [...previous, message]
         })
+      },
+      onUsersUpdated: (users) => {
+        setConnectedUsers(users)
       },
     })
 
@@ -170,21 +152,20 @@ function ChatInterface() {
           </button>
         </div>
 
-        <div className="contact-card active">
-          <div className="avatar">A</div>
-          <div>
-            <strong>{contactName}</strong>
-            <p>Online now</p>
-          </div>
-        </div>
-
         <div className="info-card">
-          <h3>Chat overview</h3>
-          <ul>
-            <li>Instant message delivery</li>
-            <li>Message history persistence</li>
-            <li>Timestamped conversation</li>
-          </ul>
+          <h3>Connected users</h3>
+          {connectedUsers.length > 0 ? (
+            <ul className="user-list">
+              {connectedUsers.map((user) => (
+                <li key={user} className="user-list-item">
+                  <span className="online-dot" />
+                  <span>{user}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No users connected yet.</p>
+          )}
         </div>
       </aside>
 
@@ -192,7 +173,7 @@ function ChatInterface() {
         <header className="chat-header">
           <div>
             <p className="eyebrow">Active room</p>
-            <h1>{contactName}</h1>
+            <h1>Group Chat</h1>
           </div>
           <div className="chat-header-actions">
             <span className="user-badge">{username || 'Guest'}</span>
@@ -202,6 +183,12 @@ function ChatInterface() {
 
         <section className="message-list" aria-label="Chat messages">
           {isLoadingHistory && <p className="history-note">Loading chat history...</p>}
+          {!isLoadingHistory && messages.length === 0 && (
+            <div className="empty-state">
+              <p>No messages yet.</p>
+              <span>Start the conversation.</span>
+            </div>
+          )}
           {messages.map((message) => {
             const isMine = message.sender === username || message.sender === 'You'
 
