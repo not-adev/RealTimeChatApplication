@@ -1,121 +1,154 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
+import { useEffect, useRef, useState } from 'react'
 import './App.css'
 
+const storageKey = 'chat-ui-messages'
+const currentUser = 'You'
+const contactName = 'Ava'
+
+const starterMessages = [
+  {
+    id: '1',
+    sender: 'Ava',
+    text: 'Hi! I am ready to help with the new chat experience.',
+    time: '2026-07-12T09:15:00.000Z',
+  },
+  {
+    id: '2',
+    sender: currentUser,
+    text: 'Perfect. I want a polished UI for the real-time chat app.',
+    time: '2026-07-12T09:16:00.000Z',
+  },
+  {
+    id: '3',
+    sender: 'Ava',
+    text: 'Great choice. The interface is now structured for live messaging.',
+    time: '2026-07-12T09:17:00.000Z',
+  },
+]
+
+function formatTime(value) {
+  const date = new Date(value)
+  return date.toLocaleTimeString([], {
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+}
+
 function App() {
-  const [count, setCount] = useState(0)
+  const [messages, setMessages] = useState(() => {
+    if (typeof window === 'undefined') {
+      return starterMessages
+    }
+
+    try {
+      const savedMessages = window.localStorage.getItem(storageKey)
+      return savedMessages ? JSON.parse(savedMessages) : starterMessages
+    } catch {
+      return starterMessages
+    }
+  })
+  const [draft, setDraft] = useState('')
+  const messageEndRef = useRef(null)
+
+  useEffect(() => {
+    window.localStorage.setItem(storageKey, JSON.stringify(messages))
+  }, [messages])
+
+  useEffect(() => {
+    messageEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
+
+  function handleSend(event) {
+    event.preventDefault()
+    const text = draft.trim()
+
+    if (!text) {
+      return
+    }
+
+    const nextMessage = {
+      id: crypto.randomUUID?.() ?? `${Date.now()}`,
+      sender: currentUser,
+      text,
+      time: new Date().toISOString(),
+    }
+
+    setMessages((previous) => [...previous, nextMessage])
+    setDraft('')
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <div className="app-shell">
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <div>
+            <p className="eyebrow">Realtime chat</p>
+            <h2>Conversations</h2>
+          </div>
+          <button type="button" className="ghost-btn small-btn">
+            +
+          </button>
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
+
+        <div className="contact-card active">
+          <div className="avatar">A</div>
+          <div>
+            <strong>{contactName}</strong>
+            <p>Online now</p>
+          </div>
         </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
+        <div className="info-card">
+          <h3>Chat overview</h3>
           <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
+            <li>Instant message delivery</li>
+            <li>Message history persistence</li>
+            <li>Timestamped conversation</li>
           </ul>
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      </aside>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      <main className="chat-panel">
+        <header className="chat-header">
+          <div>
+            <p className="eyebrow">Active room</p>
+            <h1>{contactName}</h1>
+          </div>
+          <span className="status-pill">● Connected</span>
+        </header>
+
+        <section className="message-list" aria-label="Chat messages">
+          {messages.map((message) => {
+            const isMine = message.sender === currentUser
+
+            return (
+              <article
+                key={message.id}
+                className={`message-bubble ${isMine ? 'mine' : 'their'}`}
+              >
+                <div className="message-meta">
+                  <strong>{message.sender}</strong>
+                  <span>{formatTime(message.time)}</span>
+                </div>
+                <p>{message.text}</p>
+              </article>
+            )
+          })}
+          <div ref={messageEndRef} />
+        </section>
+
+        <form className="composer" onSubmit={handleSend}>
+          <input
+            type="text"
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            placeholder="Write a message..."
+            aria-label="Message input"
+          />
+          <button type="submit">Send</button>
+        </form>
+      </main>
+    </div>
   )
 }
 

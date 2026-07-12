@@ -3,6 +3,10 @@ import 'dotenv/config';
 import {createServer } from 'http';
 import cors from 'cors';
 import {Server} from 'socket.io';
+import {connectToDb} from './src/config/db.js';
+
+await connectToDb();
+
 const app = express();
 const httpServer = createServer(app);   
 const PORT = process.env.PORT || 3000;
