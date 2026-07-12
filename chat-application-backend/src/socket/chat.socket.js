@@ -4,6 +4,11 @@ export function registerChatSocket(io) {
   io.on('connection', (socket) => {
     console.log('Socket connected:', socket.id)
 
+
+
+
+    
+
     socket.on('join', ({ username }) => {
       if (username) {
         socket.username = username
@@ -13,6 +18,11 @@ export function registerChatSocket(io) {
         console.log(`${username} joined the chat`)
       }
     })
+
+
+
+
+
 
     socket.on('sendMessage', (message) => {
       if (!message || !message.text) {
@@ -28,6 +38,12 @@ export function registerChatSocket(io) {
 
       io.to('global-chat').emit('newMessage', payload)
     })
+
+
+
+
+
+
 
     socket.on('disconnect', () => {
       console.log('Socket disconnected:', socket.id)

@@ -1,5 +1,6 @@
 import { Chat } from '../schemas/chat.schema.js';
 
+
 export async function getChatHistory() {
   const messages = await Chat.find({}).sort({ time: 1, createdAt: 1 }).lean();
 
@@ -10,6 +11,11 @@ export async function getChatHistory() {
     time: message.time ? message.time.toISOString() : new Date().toISOString(),
   }));
 }
+
+
+
+
+
 
 export async function createChatMessage(payload) {
   const message = await Chat.create({

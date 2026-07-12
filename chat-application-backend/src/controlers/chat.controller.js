@@ -10,6 +10,9 @@ export async function fetchChatHistory(req, res) {
   }
 }
 
+
+
+
 export async function addNewChat(req, res) {
   try {
     const { sender, text, time } = req.body;
