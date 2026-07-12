@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { fetchMessages, sendMessage } from '../apiCalls/chatApi'
+import { connectSocket, disconnectSocket, emitSendMessage } from '../socket/chatSocket'
 
 const storageKey = 'chat-ui-messages'
 const userStorageKey = 'chat-ui-username'
@@ -56,6 +57,7 @@ function ChatInterface() {
     return window.localStorage.getItem(userStorageKey) || ''
   })
   const [isLoadingHistory, setIsLoadingHistory] = useState(false)
+  const socketRef = useRef(null)
   const messageEndRef = useRef(null)
 
   useEffect(() => {
@@ -97,6 +99,32 @@ function ChatInterface() {
     }
   }, [])
 
+  useEffect(() => {
+    if (!username) {
+      return undefined
+    }
+
+    const socket = connectSocket({
+      username,
+      onMessageReceived: (message) => {
+        setMessages((previous) => {
+          if (previous.some((item) => item.id === message.id)) {
+            return previous
+          }
+
+          return [...previous, message]
+        })
+      },
+    })
+
+    socketRef.current = socket
+
+    return () => {
+      disconnectSocket()
+      socketRef.current = null
+    }
+  }, [username])
+
   async function handleSend(event) {
     event.preventDefault()
     const text = draft.trim()
@@ -114,6 +142,7 @@ function ChatInterface() {
     try {
       const savedMessage = await sendMessage(payload)
       setMessages((previous) => [...previous, savedMessage])
+      emitSendMessage(savedMessage)
       setDraft('')
     } catch {
       const fallbackMessage = {
