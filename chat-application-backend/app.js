@@ -6,6 +6,7 @@ import { Server } from 'socket.io';
 import { connectToDb } from './src/config/db.js';
 import chatRoutes from './src/routes/chat.routes.js';
 import logger from './src/middleware/logginMiddleware.js';
+import { registerChatSocket } from './src/socket/chat.socket.js';
 
 await connectToDb();
 
@@ -47,13 +48,7 @@ app.get('/', (req, res) => {
   res.send('Hello World!');
 });
 
-io.on('connection', (socket) => {
-  console.log('Socket connected:', socket.id);
-
-  socket.on('disconnect', () => {
-    console.log('Socket disconnected:', socket.id);
-  });
-});
+registerChatSocket(io);
 
 httpServer.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
