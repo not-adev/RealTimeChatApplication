@@ -7,7 +7,7 @@ export function registerChatSocket(io) {
 
 
 
-    
+
 
     socket.on('join', ({ username }) => {
       if (username) {
@@ -46,6 +46,11 @@ export function registerChatSocket(io) {
 
 
     socket.on('disconnect', () => {
+      if (socket.username) {
+        connectedUsers.delete(socket.username)
+        io.to('global-chat').emit('usersUpdated', Array.from(connectedUsers))
+      }
+
       console.log('Socket disconnected:', socket.id)
     })
   })
