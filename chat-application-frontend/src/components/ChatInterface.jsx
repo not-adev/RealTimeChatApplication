@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
+import { fetchMessages, sendMessage } from '../apiCalls/chatApi'
 
 const storageKey = 'chat-ui-messages'
 const userStorageKey = 'chat-ui-username'
-const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 const contactName = 'Ava'
 
 const starterMessages = [
@@ -71,20 +71,12 @@ function ChatInterface() {
       setIsLoadingHistory(true)
 
       try {
-        const response = await fetch(`${apiBaseUrl}/api/messages`, {
-          headers: {
-            Accept: 'application/json',
-          },
-        })
+        const data = await fetchMessages()
 
-        if (response.ok) {
-          const data = await response.json()
-
-          if (Array.isArray(data?.messages) && data.messages.length > 0) {
-            setMessages(data.messages)
-          } else {
-            setMessages((previous) => (previous.length > 0 ? previous : starterMessages))
-          }
+        if (data.length > 0) {
+          setMessages(data)
+        } else {
+          setMessages((previous) => (previous.length > 0 ? previous : starterMessages))
         }
       } catch {
         setMessages((previous) => (previous.length > 0 ? previous : starterMessages))
@@ -105,7 +97,7 @@ function ChatInterface() {
     }
   }, [])
 
-  function handleSend(event) {
+  async function handleSend(event) {
     event.preventDefault()
     const text = draft.trim()
 
@@ -113,15 +105,27 @@ function ChatInterface() {
       return
     }
 
-    const nextMessage = {
-      id: crypto.randomUUID?.() ?? `${Date.now()}`,
+    const payload = {
       sender: username || 'You',
       text,
       time: new Date().toISOString(),
     }
 
-    setMessages((previous) => [...previous, nextMessage])
-    setDraft('')
+    try {
+      const savedMessage = await sendMessage(payload)
+      setMessages((previous) => [...previous, savedMessage])
+      setDraft('')
+    } catch {
+      const fallbackMessage = {
+        id: crypto.randomUUID?.() ?? `${Date.now()}`,
+        sender: payload.sender,
+        text: payload.text,
+        time: payload.time,
+      }
+
+      setMessages((previous) => [...previous, fallbackMessage])
+      setDraft('')
+    }
   }
 
   return (
